@@ -1,22 +1,16 @@
 #!/bin/bash
-
 echo " Est ce que voulez vous ajouter ou créer une machine ??"
 echo " Taper (y/Y) si voulez vous créer  "
 echo "Ou bien (n/N) si vous ne voulez pas " 
 read boolMachine
-
-
-while [[ $boolMachine != "n" && $boolMachine != "N" && $boolMachine != "y"  &&  $boolMachine != "Y" ]];
-do 
-echo "Vous avez mal taper la commande , je repete ma question ?? Est ce que voulez vous ajouter ou créer une machine ??? "
-echo "Taper (y/Y) si voulez vous créer "
-echo "Ou bien (n/N) si vous ne voulez pas " 
-read boolMachine
-done
-
-
-if [[ $boolMachine=="y" || $boolMachine=="Y" ]];then 
-
+         while [[ $boolMachine != "n" && $boolMachine != "N" && $boolMachine != "y"  &&  $boolMachine != "Y" ]];
+         do 
+            echo "Vous avez mal taper la commande , je repete ma question ?? Est ce que voulez vous ajouter ou créer une machine ??? "
+            echo "Taper (y/Y) si voulez vous créer "
+            echo "Ou bien (n/N) si vous ne voulez pas " 
+            read boolMachine
+         done
+     if [[ $boolMachine=="y" || $boolMachine=="Y" ]];then       
              while [[ $boolMachine == 'y' || $boolMachine == 'Y' ]];
              do
               echo "Vous trouvez la liste des groupe qu'elle existe déja :  " 
@@ -37,6 +31,7 @@ if [[ $boolMachine=="y" || $boolMachine=="Y" ]];then
               echo " brazilsouth=Brazil South            ,  qatarcentral=Qatar Central ,"
               echo " centralusstage=USA Centre           ,  northcentralusstage=USA Centre Nord ," 
               echo " southcentralusstage=USA Centre Sud  ,  eastusstage=USA Est   , "
+
               echo " jioindiawest=Jio India West         ,  westcentralus=West Central US ," 
               echo " southafricawest=South Africa West   , australiacentral=Australia Central ,"  
               echo "australiacentral2=Australia Central 2,   australiasoutheast=Australia Southeast  ,"  
@@ -50,9 +45,7 @@ if [[ $boolMachine=="y" || $boolMachine=="Y" ]];then
               echo " eastasia                            ,   switzerlandnorth,"
               echo " japaneast                           ,   uaenorth,"  
               read location 
-
-
-         if [[ $(az group exists --name $ResourceGroupName) == "false" ]]; then
+                       if [[ $(az group exists --name $ResourceGroupName) == "false" ]]; then
                            az group create --name $ResourceGroupName --location $location
                            echo " Ce groupe est etais bien créer"
 
@@ -61,65 +54,47 @@ if [[ $boolMachine=="y" || $boolMachine=="Y" ]];then
                             echo "Ce group Existe " 
 
                        fi
+             echo " Enter the virtual machine name (used for generating resource names):  " 
+             read NameVM
+             echo " Enter the administrator username: " 
+             read username 
+             echo ""
+             echo "Vous trouvez ici la liste des images de la machine virtuel : "       
+                        az vm image list --output table 
+             echo "Enter le nom de L'image que vous voulez crée pour votre machine virtuel:  " 
+             read image
+             echo "Vous trouvez toute la liste des reséaux  "
+             az network vnet list 
+             echo " Vous trouvez la liste de reséau de Groupe $ResourceGroupName  "
+                  az network vnet list $ResourceGroupName
+             echo " Entrer  le nom de Reseau "
+             read VnetName
+             echo " Entrer  le nom de sous-Reseau  "
+             read subVnetName
+             echo " Donner le nom de l'adresse IP fournie "
+             read NameIp
+             echo "Donner la zone de l'adresse IP 1 , 2 ou 3 " 
+             read zoneIp
+        while [[ $zoneIp -ne 1 &&  $zoneIp -ne 2 && $zoneIp -ne 3 ]];
+        do 
+            echo " il faut taper la zone de l'adresse IP : 1 - 2 ou 3 "
+            read zoneIp
+        done
+                  az network public-ip create --name $NameIp --resource-group $ResourceGroupName --zone $zoneIp --allocation-method Static
+             echo   " Enter le nom  de la clé ssh   "
+             read  KeyName
+                  az sshkey create --location $location --public-key "~/.ssh/id_rsa.pub" --resource-group $ResourceGroupName --name $keyName
+                  az network vnet create --name $VnetName --resource-group $ResourceGroupName --subnet-name $subVnetName --location $location
+                  az vm create --name $NameVM --resource-group $ResourceGroupName --image $image --admin-username $username --size Standard_B1s --vnet-name $subVnetName\
+                   --ssh-key-name $KeyName --generate-ssh-keys
+            echo "   Est ce que voulez vous ajouter ou créer  une autre  machine ??  "
+            echo "  Taper (y/Y) si voulez vous créer "
+            echo " Ou bien (n/N) si vous ne voulez pas " 
+            read boolMachine
+     done
+  else
+     exit 3
+  fi
 
-echo " Enter the virtual machine name (used for generating resource names):  " 
-read NameVM
-
-echo " Enter the administrator username: " 
-read username 
-echo ""
-echo "Vous trouvez ici la liste des images de la machine virtuel : "
-
-az vm image list --output table 
-
-echo "Enter le nom de L'image que vous voulez crée pour votre machine virtuel:  " 
-read image
-
-echo "Vous trouvez toute la liste des reséaux  "
-az network vnet list 
-
-echo " Vous trouvez la liste de reséau de Groupe $ResourceGroupName  "
-az network vnet list $ResourceGroupName
-
-
-echo " Entrer  le nom de Reseau "
-read VnetName
-
-echo " Entrer  le nom de sous-Reseau  "
-read subVnetName
-
-echo " c'est les sous réseau $subVnetName  de Groupe  $ResourceGroupName  :"
-az network vnet show -g $ResourceGroupName -n $subVnetName
-
-echo " Donner le nom de l'adresse IP fournie "
-read NameIp
-
-
-echo "Donner la zone de l'adresse IP 1 , 2 ou 3 " 
-read zoneIp
-
-while [[ $zoneIp -ne 1 &&  $zoneIp -ne 2 && $zoneIp -ne 3 ]];
-do 
-echo " il faut taper la zone de l'adresse IP : 1 - 2 ou 3 "
-read zoneIp
-done
-
-az network public-ip create --name $NameIp --resource-group $ResourceGroupName --zone $zoneIp
-echo   " Enter le nom  de la clé ssh   "
-read  KeyName
-
-
-az network vnet create --name $VnetName --resource-group $ResourceGroupName --subnet-name $subVnetName --location $location
-az vm create --name $NameVM --resource-group $ResourceGroupName --image $image --admin-username $username --size Standard_B1s --vnet-name $subVnetName --ssh-key-name $KeyName --generate-ssh-keys
-
-
-echo "   Est ce que voulez vous ajouter ou créer  une autre  machine ??  "
-echo "  Taper (y/Y) si voulez vous créer "
-echo " Ou bien (n/N) si vous ne voulez pas " 
-read boolMachine
-done
-else
-exit 3
-fi
 
 
